@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tienda de Vouchers - Comunicación Visual</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-black via-gray-900 to-purple-950 min-h-screen p-6 text-white">
+
+  <div class="max-w-7xl mx-auto">
+    <div class="bg-gray-900 border border-cyan-400 rounded-3xl shadow-2xl p-6 mb-6">
+      <h1 class="text-5xl font-extrabold mb-2 text-cyan-300 tracking-wide">🎮 VISUAL REWARDS SHOP</h1>
+      <p class="text-purple-300 text-lg">Sistema gamer de recompensas - Comunicación Visual</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Estudiantes -->
+      <div class="bg-gray-900 border border-purple-500 rounded-3xl shadow-2xl p-6">
+        <h2 class="text-2xl font-bold mb-4">👨‍🎓 Estudiantes</h2>
+
+        <div class="flex gap-2 mb-4">
+          <input id="studentName" type="text" placeholder="Nombre del estudiante"
+            class="flex-1 bg-black border border-cyan-400 rounded-xl px-4 py-2 text-cyan-200">
+          <button onclick="addStudent()"
+            class="bg-cyan-500 text-black font-bold px-4 py-2 rounded-xl hover:scale-105 transition">
+            Agregar
+          </button>
+        </div>
+
+        <div id="studentList" class="space-y-3"></div>
+      </div>
+
+      <!-- Premios -->
+      <div class="bg-white rounded-3xl shadow-lg p-6 lg:col-span-2">
+        <h2 class="text-2xl font-bold mb-4">🏆 Premios</h2>
+
+        <div class="grid md:grid-cols-2 gap-4" id="rewardList"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+
+const rewards = [
+  {name:'Escuchar música con auriculares mientras trabaja', cost:20, type:'Básico'},
+  {name:'Elegir lugar en el salón por una clase', cost:25, type:'Básico'},
+  {name:'Elegir compañero de trabajo por una clase', cost:35, type:'Básico'},
+  {name:'Usar gorro o capucha por una clase', cost:40, type:'Básico'},
+  {name:'Vale por usar celular 5 min al finalizar', cost:45, type:'Básico'},
+  {name:'Llevar snack para consumir trabajando', cost:50, type:'Básico'},
+  {name:'Cambiar de equipo', cost:60, type:'Básico'},
+  {name:'Entregar una tarea una semana después', cost:80, type:'Mediano'},
+  {name:'Elegir dinámica inicial de clase', cost:90, type:'Mediano'},
+  {name:'Vale para elegir el formato de la actividad', cost:100, type:'Mediano'},
+  {name:'Rehacer una actividad para mejorar nota', cost:120, type:'Mediano'},
+  {name:'Bonus de 1 punto en una actividad', cost:140, type:'Mediano'},
+  {name:'Ser ayudante del profesor por una clase', cost:160, type:'Grande'},
+  {name:'Invitación a mini torneo/juego creativo', cost:180, type:'Grande'},
+  {name:'Subir 2 puntos en un trabajo', cost:220, type:'Grande'},
+  {name:'Vale para recuperar actividad sin descuento', cost:240, type:'Grande'},
+  {name:'Omitir una etapa en la evaluación semestral', cost:300, type:'Grande'}
+];
+
+let students = JSON.parse(localStorage.getItem('students')) || [];
+
+function saveData(){
+  localStorage.setItem('students', JSON.stringify(students));
+}
+
+function addStudent(){
+  const input = document.getElementById('studentName');
+  const name = input.value.trim();
+
+  if(name === '') return;
+
+  students.push({
+    id: Date.now(),
+    name,
+    points: 0,
+    redeemedBigRewards: []
+  });
+
+  input.value = '';
+  saveData();
+  renderStudents();
+}
+
+function addPoints(id){
+  const amount = parseInt(prompt('¿Cuántos puntos deseas agregar?'));
+
+  if(isNaN(amount)) return;
+
+  const student = students.find(s => s.id === id);
+  student.points += amount;
+
+  saveData();
+  renderStudents();
+}
+
+function removePoints(id){
+  const amount = parseInt(prompt('¿Cuántos puntos deseas quitar?'));
+
+  if(isNaN(amount)) return;
+
+  const student = students.find(s => s.id === id);
+  student.points -= amount;
+
+  if(student.points < 0) student.points = 0;
+
+  saveData();
+  renderStudents();
+}
+
+function deleteStudent(id){
+  if(confirm('¿Eliminar estudiante?')){
+    students = students.filter(s => s.id !== id);
+    saveData();
+    renderStudents();
+  }
+}
+
+function redeemReward(studentId, rewardName, rewardCost, rewardType){
+
+  const student = students.find(s => s.id === studentId);
+
+  if(student.points < rewardCost){
+    alert('No tiene suficientes puntos');
+    return;
+  }
+
+  if(rewardType === 'Grande'){
+    if(student.redeemedBigRewards.includes(rewardName)){
+      alert('Este premio grande ya fue utilizado');
+      return;
+    }
+
+    student.redeemedBigRewards.push(rewardName);
+  }
+
+  student.points -= rewardCost;
+
+  alert(`${student.name} canjeó: ${rewardName}`);
+
+  saveData();
+  renderStudents();
+}
+
+function renderStudents(){
+  const container = document.getElementById('studentList');
+
+  container.innerHTML = '';
+
+  students.forEach(student => {
+
+    const div = document.createElement('div');
+
+    div.className = 'border border-cyan-500 rounded-2xl p-4 bg-gray-950 shadow-lg';
+
+    div.innerHTML = `
+      <div class="flex justify-between items-center mb-3">
+        <div>
+          <h3 class="font-bold text-lg">${student.name}</h3>
+          <p class="text-sm text-gray-500">⭐ ${student.points} puntos</p>
+        </div>
+
+        <button onclick="deleteStudent(${student.id})"
+          class="bg-red-600 text-white px-3 py-1 rounded-lg text-sm hover:scale-105 transition">
+          Eliminar
+        </button>
+      </div>
+
+      <div class="flex gap-2 mb-4">
+        <button onclick="addPoints(${student.id})"
+          class="bg-cyan-500 text-black font-bold px-3 py-2 rounded-xl text-sm flex-1 hover:scale-105 transition">
+          + Puntos
+        </button>
+
+        <button onclick="removePoints(${student.id})"
+          class="bg-purple-600 text-white font-bold px-3 py-2 rounded-xl text-sm flex-1 hover:scale-105 transition">
+          - Puntos
+        </button>
+      </div>
+
+      <div class="space-y-2 max-h-64 overflow-auto">
+        ${rewards.map(reward => `
+          <button
+            onclick="redeemReward(${student.id}, '${reward.name}', ${reward.cost}, '${reward.type}')"
+            class="w-full text-left border border-purple-500 rounded-xl p-3 hover:bg-purple-950 transition hover:scale-105">
+
+            <div class="flex justify-between items-center gap-3">
+              <div>
+                <p class="font-medium text-sm">${reward.name}</p>
+                <p class="text-xs text-gray-500">${reward.type}</p>
+              </div>
+
+              <span class="font-bold">${reward.cost}</span>
+            </div>
+          </button>
+        `).join('')}
+      </div>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+function renderRewards(){
+
+  const container = document.getElementById('rewardList');
+
+  rewards.forEach(reward => {
+
+    const div = document.createElement('div');
+
+    let color = 'bg-gradient-to-r from-cyan-900 to-cyan-700 border border-cyan-300';
+
+    if(reward.type === 'Mediano') color = 'bg-gradient-to-r from-purple-900 to-fuchsia-700 border border-fuchsia-300';
+    if(reward.type === 'Grande') color = 'bg-gradient-to-r from-red-900 to-orange-700 border border-yellow-300';
+
+    div.className = `${color} rounded-2xl p-4 shadow-xl hover:scale-105 transition`;
+
+    div.innerHTML = `
+      <div class="flex justify-between items-center">
+        <div>
+          <h3 class="font-bold">${reward.name}</h3>
+          <p class="text-sm">${reward.type}</p>
+        </div>
+
+        <div class="text-2xl font-bold">
+          ${reward.cost}
+        </div>
+      </div>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+renderStudents();
+renderRewards();
+
+</script>
+
+
+<audio id="successSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=success-fanfare-trumpets-6185.mp3"></audio>
+<audio id="clickSound" src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_2cf8f5b7a7.mp3?filename=interface-click-124467.mp3"></audio>
+
+<style>
+@keyframes glow {
+  0% { box-shadow: 0 0 5px #22d3ee; }
+  50% { box-shadow: 0 0 20px #22d3ee; }
+  100% { box-shadow: 0 0 5px #22d3ee; }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}
+
+h1 {
+  animation: glow 2s infinite;
+}
+
+.reward-card:hover {
+  animation: float 0.8s infinite;
+}
+</style>
+
+<script>
+
+function playClick(){
+  document.getElementById('clickSound').play();
+}
+
+function playSuccess(){
+  document.getElementById('successSound').play();
+}
+
+const originalAddStudent = addStudent;
+addStudent = function(){
+  playClick();
+  originalAddStudent();
+}
+
+const originalAddPoints = addPoints;
+addPoints = function(id){
+  playClick();
+  originalAddPoints(id);
+}
+
+const originalRemovePoints = removePoints;
+removePoints = function(id){
+  playClick();
+  originalRemovePoints(id);
+}
+
+const originalRedeemReward = redeemReward;
+redeemReward = function(studentId, rewardName, rewardCost, rewardType){
+  playClick();
+
+  const student = students.find(s => s.id === studentId);
+
+  if(student.points >= rewardCost){
+    playSuccess();
+  }
+
+  originalRedeemReward(studentId, rewardName, rewardCost, rewardType);
+}
+
+setTimeout(() => {
+  document.querySelectorAll('.rounded-2xl').forEach(card => {
+    card.classList.add('reward-card');
+  });
+}, 500);
+
+</script>
+
+</body>
+</html>
